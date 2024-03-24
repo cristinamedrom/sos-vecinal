@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthProvider';
-import prisma from '../../backend/prisma/client';
+import { db } from '../config/firebase';
 
 const RecepcionIncidencias = () => {
   const { currentUser } = useAuth();
@@ -11,16 +11,15 @@ const RecepcionIncidencias = () => {
     const fetchIncidencias = async () => {
       try {
         if (!currentUser.isCompany) {
+          return;
         }
 
-        const data = await prisma.incident.findMany({
-          where: {
-            type: currentUser.companyType
-          },
-          orderBy: {
-            createdAt: 'desc'
-          }
-        });
+        const querySnapshot = await db.collection('incidents')
+          .where('type', '==', currentUser.companyType)
+          .orderBy('createdAt', 'desc')
+          .get();
+
+        const data = querySnapshot.docs.map(doc => doc.data());
         setIncidencias(data);
         setLoading(false);
       } catch (error) {

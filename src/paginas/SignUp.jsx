@@ -3,8 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../config/firebase';
 
-const SERVER_URL = import.meta.env.VITE_APP_SERVER_URL;
-
 const SignUp = () => {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState('');
@@ -19,15 +17,11 @@ const SignUp = () => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      await fetch(`${SERVER_URL}/api/registro`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fullName: fullName,
-          email: email,
-        }),
+      await db.collection('users').doc(user.uid).set({
+        fullName: fullName,
+        email: email,
+        isCompany: isCompany,
+        isResident: isResident
       });
 
       navigate('/perfil');

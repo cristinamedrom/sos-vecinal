@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthProvider';
 import { db } from '../config/firebase';
 
@@ -8,29 +7,29 @@ const Perfil = () => {
   const { currentUser } = useAuth();
   const [userData, setUserData] = useState(null);
   const { register, handleSubmit, formState: { errors } } = useForm();
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (currentUser) {
-      const fetchData = async () => {
+      const fetchUserData = async () => {
         try {
-          const docRef = db.collection('users').doc(currentUser.uid);
-          const docSnapshot = await docRef.get();
-          if (docSnapshot.exists()) {
-            setUserData(docSnapshot.data());
+          const userDoc = await db.collection('users').doc(currentUser.uid).get();
+          if (userDoc.exists) {
+            setUserData(userDoc.data());
+          } else {
+            console.log('No se encontraron datos para este usuario.');
           }
         } catch (error) {
           console.error('Error al obtener los datos del usuario:', error);
         }
       };
-      fetchData();
+      fetchUserData();
     }
   }, [currentUser]);
 
   const onSubmit = async (data) => {
     try {
-      await db.collection('users').doc(currentUser.uid).set(data, { merge: true });
-      navigate('/');
+      await db.collection('users').doc(currentUser.uid).update(data);
+      console.log('Datos del usuario actualizados correctamente.');
     } catch (error) {
       console.error('Error al actualizar los datos del usuario:', error);
     }

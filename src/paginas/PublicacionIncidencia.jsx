@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthProvider';
-import prisma from '../../backend/prisma/client';
+import { db } from '../config/firebase';
 
 const PublicacionIncidencia = () => {
   const { currentUser } = useAuth();
@@ -14,14 +14,12 @@ const PublicacionIncidencia = () => {
   useEffect(() => {
     const fetchIncidencias = async () => {
       try {
-        const data = await prisma.incident.findMany({
-          where: {
-            reportedBy: { community: currentUser.community }
-          },
-          orderBy: {
-            createdAt: 'desc'
-          }
-        });
+        const snapshot = await db.collection('incidents')
+          .where('reportedBy.community', '==', currentUser.community)
+          .orderBy('createdAt', 'desc')
+          .get();
+
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setIncidencias(data);
         setLoading(false);
       } catch (error) {
@@ -45,16 +43,15 @@ const PublicacionIncidencia = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await prisma.incident.create({
-        data: {
-          type: formData.type,
-          description: formData.description,
-          reportedBy: {
-            connect: { id: currentUser.id }
-          }
-        }
+      await db.collection('incidents').add({
+        type: formData.type,
+        description: formData.description,
+        reportedBy: {
+          id: currentUser.uid,
+          community: currentUser.community
+        },
+        createdAt: new Date()
       });
-      setIncidencias(prevIncidencias => [...prevIncidencias, formData]);
       setFormData({ type: '', description: '' });
     } catch (error) {
       console.error('Error al publicar la incidencia:', error);
