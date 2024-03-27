@@ -101,6 +101,7 @@ const PublicacionIncidencia = () => {
               return (
                 <li key={incidencia.id}>
                   <p>Fecha de publicación: {formattedDate}</p>
+                  <p>Reportado por: {incidencia.reportedBy}</p>
                   <p>Tipo: {incidencia.type}</p>
                   <p>Descripción: {incidencia.description}</p>
                 </li>
