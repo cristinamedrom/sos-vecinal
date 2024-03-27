@@ -75,8 +75,6 @@ const PublicacionIncidencia = () => {
 
   return (
     <div>
-      {currentUser?.isResident && <NavbarResidente />}
-      {currentUser?.isCompany && <NavbarEmpresa />}
       <h2>Publicar Incidencia</h2>
       <form onSubmit={handleSubmit(onSubmit)}>
         <label htmlFor="type">Tipo:</label>

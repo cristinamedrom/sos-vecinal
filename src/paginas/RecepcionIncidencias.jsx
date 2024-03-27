@@ -10,16 +10,20 @@ const RecepcionIncidencias = () => {
 
   useEffect(() => {
     const fetchIncidencias = async () => {
-      if (currentUser && currentUser.companyType) {
+      if (currentUser?.isCompany && currentUser?.companyType) {
         const q = query(
           collection(db, 'incidents'),
           where('type', '==', currentUser.companyType),
           orderBy('createdAt', 'desc')
         );
-
+  
         try {
           const querySnapshot = await getDocs(q);
-          const incidenciasData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const incidenciasData = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt.toDate()
+          }));
           setIncidencias(incidenciasData);
         } catch (error) {
           console.error('Error al obtener las incidencias:', error);
@@ -28,7 +32,7 @@ const RecepcionIncidencias = () => {
         }
       }
     };
-
+  
     fetchIncidencias();
   }, [currentUser]);
 
@@ -42,8 +46,6 @@ const RecepcionIncidencias = () => {
 
   return (
     <div>
-      {currentUser?.isCompany && <NavbarEmpresa />}
-      {currentUser?.isResident && <NavbarResidente />}
       <h2>Incidencias asignadas a mi empresa</h2>
       <ul>
         {incidencias.map(incidencia => (
