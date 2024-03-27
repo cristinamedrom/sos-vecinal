@@ -1,32 +1,29 @@
 import { useState, useEffect, createContext, useContext } from 'react';
-import { isUserLoggedIn } from "../service/auth";
-import { useQueryClient, QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../config/firebase';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
-
-  const queryClient = useQueryClient();
-
-  const { data } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: isUserLoggedIn,
-  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (data?.user) {
-      setCurrentUser(data?.user);
-    } else {
-      setCurrentUser(null);
-    }
-  }, [data]);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return <div>Cargando...</div>;
+  }
 
   return (
     <AuthContext.Provider value={{ currentUser }}>
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
+      {children}
     </AuthContext.Provider>
   );
 };

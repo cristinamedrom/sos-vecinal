@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../config/firebase';
+import { doc, setDoc } from 'firebase/firestore'; // Cambio aquí para usar doc y setDoc
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -14,12 +15,13 @@ const SignUp = () => {
   const handleRegistro = async (e) => {
     e.preventDefault();
     try {
+      // Registra el usuario con Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
 
-      await db.collection('users').doc(user.uid).set({
+      // Ahora, crea un documento en Firestore usando el correo electrónico como identificador
+      await setDoc(doc(db, "users", email), { // Nota el cambio aquí para crear el documento
         fullName: fullName,
-        email: email,
+        email: email, // Usar el email como ID permite un fácil acceso y vinculación
         isCompany: isCompany,
         isResident: isResident
       });
@@ -52,8 +54,18 @@ const SignUp = () => {
         </div>
         <br />
         <div>
+          <input type="checkbox" checked={!isCompany} onChange={(e) => setIsCompany(!e.target.checked)} />
+          <label>No Empresa</label>
+        </div>
+        <br />
+        <div>
           <input type="checkbox" checked={isResident} onChange={(e) => setIsResident(e.target.checked)} />
           <label>Vecino</label>
+        </div>
+        <br />
+        <div>
+          <input type="checkbox" checked={!isResident} onChange={(e) => setIsResident(!e.target.checked)} />
+          <label>No Vecino</label>
         </div>
         <br />
         <br />

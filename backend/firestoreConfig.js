@@ -7,7 +7,7 @@ admin.initializeApp({
   databaseURL: "https://sos-vecinal-bd10b-default-rtdb.firebaseio.com"
 });
 
-const db = admin.firestore();
+const db = firebase.firestore();
 const userRef = db.collection('users');
 const incidentRef = db.collection('incidents');
 

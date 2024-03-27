@@ -1,100 +1,114 @@
 import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { useAuth } from '../context/AuthProvider';
 import { db } from '../config/firebase';
+import { collection, query, where, orderBy, getDocs, addDoc } from "firebase/firestore";
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
 
 const PublicacionIncidencia = () => {
   const { currentUser } = useAuth();
   const [incidencias, setIncidencias] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({
-    type: '',
-    description: ''
-  });
+  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const [userCommunity, setUserCommunity] = useState('');
 
   useEffect(() => {
-    const fetchIncidencias = async () => {
-      try {
-        const snapshot = await db.collection('incidents')
-          .where('reportedBy.community', '==', currentUser.community)
-          .orderBy('createdAt', 'desc')
-          .get();
+    const fetchUserDetails = async () => {
+      if (currentUser?.email) {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', currentUser.email));
+        const querySnapshot = await getDocs(q);
+        const userData = querySnapshot.docs[0]?.data();
 
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setIncidencias(data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error al obtener las incidencias:', error);
+        if (userData?.community) {
+          setUserCommunity(userData.community);
+          fetchIncidencias(userData.community);
+        } else {
+          console.log("No se encontró la comunidad del usuario.");
+        }
       }
     };
 
-    if (currentUser) {
-      fetchIncidencias();
+    const fetchIncidencias = async (community) => {
+      const q = query(
+        collection(db, 'incidents'),
+        where('community', '==', community),
+        orderBy('createdAt', 'desc')
+      );
+
+      try {
+        const querySnapshot = await getDocs(q);
+        const incidenciasData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setIncidencias(incidenciasData);
+      } catch (error) {
+        console.error('Error al obtener las incidencias:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserDetails();
+  }, [currentUser, db]);
+
+  const onSubmit = async (data) => {
+    if (!userCommunity) {
+      console.error('La comunidad del usuario no está definida.');
+      return;
     }
-  }, [currentUser]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
     try {
-      await db.collection('incidents').add({
-        type: formData.type,
-        description: formData.description,
-        reportedBy: {
-          id: currentUser.uid,
-          community: currentUser.community
-        },
+      await addDoc(collection(db, 'incidents'), {
+        ...data,
+        community: userCommunity,
+        reportedBy: currentUser.email,
         createdAt: new Date()
       });
-      setFormData({ type: '', description: '' });
+      reset();
     } catch (error) {
       console.error('Error al publicar la incidencia:', error);
     }
   };
 
-  if (loading) {
-    return <div>Cargando...</div>;
-  }
+  const timeZone = 'Europe/Madrid';
 
   return (
     <div>
+      {currentUser?.isResident && <NavbarResidente />}
+      {currentUser?.isCompany && <NavbarEmpresa />}
       <h2>Publicar Incidencia</h2>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <label htmlFor="type">Tipo:</label>
-        <input
-          type="text"
-          id="type"
-          name="type"
-          value={formData.type}
-          onChange={handleChange}
-          required
-        />
+        <input type="text" id="type" {...register('type', { required: true })} />
+        {errors.type && <span>Este campo es obligatorio</span>}
+
         <label htmlFor="description">Descripción:</label>
-        <textarea
-          id="description"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          required
-        ></textarea>
+        <textarea id="description" {...register('description', { required: true })}></textarea>
+        {errors.description && <span>Este campo es obligatorio</span>}
+
         <button type="submit">Publicar</button>
       </form>
 
-      <h2>Incidencias</h2>
-      <ul>
-        {incidencias.map(incidencia => (
-          <li key={incidencia.id}>
-            <p>Tipo: {incidencia.type}</p>
-            <p>Descripción: {incidencia.description}</p>
-          </li>
-        ))}
-      </ul>
+      {loading ? <p>Cargando incidencias...</p> : (
+        <>
+          <h2>Incidencias</h2>
+          <ul>
+            {incidencias.map(incidencia => {
+              const dateInSpain = utcToZonedTime(incidencia.createdAt.toDate(), timeZone);
+              const formattedDate = format(dateInSpain, 'Pp', { locale: es });
+              
+              return (
+                <li key={incidencia.id}>
+                  <p>Fecha de publicación: {formattedDate}</p>
+                  <p>Tipo: {incidencia.type}</p>
+                  <p>Descripción: {incidencia.description}</p>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
     </div>
   );
 };

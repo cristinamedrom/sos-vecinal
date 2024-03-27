@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation, BrowserRouter } from 'react-router-dom';
+import Navbar from './componentes/Navbar';
 import HomePage from "./paginas/HomePage";
 import Login from './paginas/Login';
 import SignUp from './paginas/SignUp';
 import PublicacionIncidencia from './paginas/PublicacionIncidencia';
 import RecepcionIncidencias from './paginas/RecepcionIncidencias';
 import Perfil from './paginas/Perfil';
-import NavbarResidente from './componentes/NavbarResidente';
-import NavbarEmpresa from './componentes/NavbarEmpresa';
-import RequireAuth from "./componentes/ProtectedRoute";
 import { auth } from './config/firebase';
 
 const App = () => {
   const [currentUser, setCurrentUser] = useState(null);
+  const location = useLocation();
 
   const handleLogin = async (userData) => {
     try {
@@ -37,9 +36,7 @@ const App = () => {
 
   return (
     <div>
-      {currentUser?.isResident && <NavbarResidente />}
-      {currentUser?.isCompany && <NavbarEmpresa />}
-      
+      <Navbar currentUser={currentUser} onLogout={handleLogout} />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/signup" element={<SignUp />} />
@@ -51,5 +48,6 @@ const App = () => {
     </div>
   );
 };
+
 
 export default App;
