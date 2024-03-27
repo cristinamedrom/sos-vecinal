@@ -21,7 +21,7 @@ const Navbar = ({ onLogout }) => {
             <Link to="/incidencias/vecino">Publicación de incidencias</Link>
           </p>
         
-        <p onClick={onLogout}>Cerrar sesión</p>
+        <button onClick={onLogout}>Cerrar sesión</button>
       </div>
     </nav>
   );
