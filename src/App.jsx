@@ -14,6 +14,8 @@ const App = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const hideNavbarOnRoutes = ['/', '/signup', '/login'];
+  const showNavbar = !hideNavbarOnRoutes.includes(location.pathname);
 
   const handleLogin = async (userData) => {
     try {
@@ -42,7 +44,7 @@ const App = () => {
 
   return (
     <div>
-      {location.pathname !== "/" && <Navbar onLogout={handleLogout} />}
+      {showNavbar && <Navbar onLogout={handleLogout} />}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/signup" element={<SignUp />} />
