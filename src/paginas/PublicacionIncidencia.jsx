@@ -14,6 +14,25 @@ const PublicacionIncidencia = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
   const [userCommunity, setUserCommunity] = useState('');
 
+  const fetchIncidencias = async (community) => {
+    setLoading(true);
+    const q = query(
+      collection(db, 'incidents'),
+      where('community', '==', community),
+      orderBy('createdAt', 'desc')
+    );
+
+    try {
+      const querySnapshot = await getDocs(q);
+      const incidenciasData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setIncidencias(incidenciasData);
+    } catch (error) {
+      console.error('Error al obtener las incidencias:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchUserDetails = async () => {
       if (currentUser?.email) {
@@ -28,24 +47,6 @@ const PublicacionIncidencia = () => {
         } else {
           console.log("No se encontró la comunidad del usuario.");
         }
-      }
-    };
-
-    const fetchIncidencias = async (community) => {
-      const q = query(
-        collection(db, 'incidents'),
-        where('community', '==', community),
-        orderBy('createdAt', 'desc')
-      );
-
-      try {
-        const querySnapshot = await getDocs(q);
-        const incidenciasData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setIncidencias(incidenciasData);
-      } catch (error) {
-        console.error('Error al obtener las incidencias:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -66,6 +67,7 @@ const PublicacionIncidencia = () => {
         createdAt: new Date()
       });
       reset();
+      fetchIncidencias(userCommunity);
     } catch (error) {
       console.error('Error al publicar la incidencia:', error);
     }
