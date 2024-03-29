@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Routes, Route, useLocation, BrowserRouter } from 'react-router-dom';
+import { Routes, Route, useLocation, BrowserRouter, useNavigate } from 'react-router-dom';
 import Navbar from './componentes/Navbar';
 import HomePage from "./paginas/HomePage";
 import Login from './paginas/Login';
@@ -9,9 +9,11 @@ import RecepcionIncidencias from './paginas/RecepcionIncidencias';
 import Perfil from './paginas/Perfil';
 import { auth } from './config/firebase';
 
+
 const App = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleLogin = async (userData) => {
     try {
@@ -25,9 +27,13 @@ const App = () => {
   };
 
   const handleLogout = () => {
-    auth.signOut();
-    setCurrentUser(null);
-    console.log('Cierre de sesión exitoso');
+    auth.signOut().then(() => {
+      setCurrentUser(null);
+      console.log('Cierre de sesión exitoso');
+      navigate('/');
+    }).catch((error) => {
+      console.error('Error al cerrar sesión', error);
+    });
   };
 
   const handleRegister = (user) => {
@@ -36,7 +42,7 @@ const App = () => {
 
   return (
     <div>
-      <Navbar currentUser={currentUser} onLogout={handleLogout} />
+      {location.pathname !== "/" && <Navbar onLogout={handleLogout} />}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/signup" element={<SignUp />} />

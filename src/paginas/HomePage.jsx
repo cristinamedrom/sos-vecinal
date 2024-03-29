@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 const HomePage = () => {
     return (
         <div>
-            <h1>SOS Vecinal</h1>
+            <h1><img className='logo' src="https://i.ibb.co/7C6X3Jm/sos-vecinal-logo.png"/> SOS Vecinal</h1>
             <h3>¿Tienes alguna incidencia en tu Comunidad?</h3>
             <p>
                 En el portal de SOS Vecinal puedes registrarte junto a todos tu vecinos para dar el aviso de las incidencias más eficientemente,
